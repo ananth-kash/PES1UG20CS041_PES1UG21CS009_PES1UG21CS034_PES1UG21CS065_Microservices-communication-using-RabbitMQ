@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  mysql:
+    build:
+      context: ./mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: badyal2003
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql/mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "3307", "-u", "root", "-pbadyal2003"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  item_creation_microservice:
+    build:
+      context: ./consumer2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      
+      
+
+  order_processing_microservice:
+    build:
+      context: ./consumer4
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      
+      
+
+  inventory_manager_microservice:
+    build:
+      context: ./consumer3
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      
+      
+
+  producer:
+    build:
+      context: ./producer
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      

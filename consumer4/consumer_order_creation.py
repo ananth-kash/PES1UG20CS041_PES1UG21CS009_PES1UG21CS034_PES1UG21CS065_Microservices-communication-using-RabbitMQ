@@ -3,6 +3,8 @@ import mysql.connector
 import json
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
 # Establish RabbitMQ connection
 connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
 channel = connection.channel()
@@ -28,13 +30,20 @@ def calculate_total_price(order_data):
     try:
         order = json.loads(order_data)
         total_price = 0
-        for itemID, quantity in order.items():
-            cursor.execute("SELECT price FROM items WHERE itemID = %s", (itemID,))
+        for item in order:
+            item_id = item['id']
+            quantity = int(item['quantity'])
+            cursor.execute("SELECT price FROM items WHERE itemID = %s", (item_id,))
             item_price = cursor.fetchone()[0]
             total_price += item_price * quantity
-        logging.info("Order processed successfully. Total price: %s", total_price)
+        logging.info("Order processed successfully. Total price: %s", str(total_price))
+        channel.basic_publish(exchange='', routing_key='bill_data', body=str(total_price))
+
+    except mysql.connector.Error as err:
+        logging.error("MySQL error: %s", err)
     except Exception as e:
         logging.error("Error calculating total price: %s", e)
+
 
 # Callback function for consuming messages from order_queue
 def order_callback(ch, method, properties, body):
@@ -45,6 +54,7 @@ def order_callback(ch, method, properties, body):
 def stock_callback(ch, method, properties, body):
     order_data = body.decode('utf-8')
     calculate_total_price(order_data)
+    logging.info("consumed message from stock_to_order")
 
 # Consume messages from order_queue
 channel.basic_consume(queue='order_queue', on_message_callback=order_callback, auto_ack=True)

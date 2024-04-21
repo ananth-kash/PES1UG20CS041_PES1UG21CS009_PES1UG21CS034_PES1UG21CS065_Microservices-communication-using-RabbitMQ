@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Place Order</h1>
+    <form id="order_form" action="/place_order" method="POST">
+        <div id="items_container">
+            <div class="item">
+                <label for="item_id">Item ID:</label>
+                <input type="text" name="item_id[]" class="item_id">
+                <label for="item_quantity">Quantity:</label>
+                <input type="number" name="item_quantity[]" class="item_quantity">
+            </div>
+        </div>
+        <button type="button" id="add_item">Add Item</button>
+        <br>
+        <!-- Hidden input field for order_data -->
+        <input type="hidden" name="order_data" id="order_data">
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            $("#add_item").click(function() {
+                $("#items_container").append('<div class="item"><label for="item_id">Item ID:</label><input type="text" name="item_id[]" class="item_id"><label for="item_quantity">Quantity:</label><input type="number" name="item_quantity[]" class="item_quantity"></div>');
+            });
+
+            // Function to construct order_data JSON
+            function constructOrderData() {
+                var orderData = [];
+                $(".item").each(function() {
+                    var itemId = $(this).find(".item_id").val();
+                    var itemQuantity = $(this).find(".item_quantity").val();
+                    orderData.push({ "id": itemId, "quantity": itemQuantity });
+                });
+                return JSON.stringify(orderData);
+            }
+
+            // Submit form event listener
+            $("#order_form").submit(function() {
+                var orderData = constructOrderData();
+                $("#order_data").val(orderData);
+            });
+        });
+    </script>
+</body>
+</html>

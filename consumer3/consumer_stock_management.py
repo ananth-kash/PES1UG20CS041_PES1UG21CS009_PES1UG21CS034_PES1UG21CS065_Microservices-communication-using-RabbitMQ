@@ -38,18 +38,22 @@ def handle_order_processing(message_data):
                                       host='mysql', database='cc_project')
         cursor = cnx.cursor()
         order_data = json.loads(message_data)
-        for item_id, quantity in order_data.items():
+        for item in order_data:
+            item_id = item['id']
+            quantity = int(item['quantity'])
+
             cursor.execute("SELECT quantity FROM items WHERE itemID = %s", (item_id,))
             current_quantity = cursor.fetchone()[0]
-            logging.info("fetched quantity: %s", current_quantity)
+
             updated_quantity = current_quantity - quantity
-            logging.info("updated quantity: %s", updated_quantity)
+
             if updated_quantity < 0:
-                logging.warning("Stock insufficient for order: %s", order_data)
+                logging.warning("Stock insufficient for item with ID %s", item_id)
                 channel.basic_publish(exchange='', routing_key='stock_to_order', body="unsuccessful")
                 return
             else:
                 update_item_quantity2(cursor, item_id, updated_quantity)
+
         logging.info("Inventory managed for order: %s", order_data)
         channel.basic_publish(exchange='', routing_key='stock_to_order', body=json.dumps(order_data))
         cnx.commit()
@@ -60,6 +64,7 @@ def handle_order_processing(message_data):
     finally:
         cursor.close()
         cnx.close()
+
 
 def callback(ch, method, properties, body):
     message_data = body.decode('utf-8')

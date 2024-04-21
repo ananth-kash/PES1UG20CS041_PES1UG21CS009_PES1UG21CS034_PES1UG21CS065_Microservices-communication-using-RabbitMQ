@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producer Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha384-Q9OoORXFusUZk/3v3vPg6YKrgBoYwPbCpCy1enGhNvGjfmKpi3+3hAfy1cfbE+fu" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('bill_data_message', function(data) {
+            document.getElementById("bill_data_messages").innerHTML += "<p>" + data + "</p>";
+        });
+    </script>
+</head>
+<body>
+    <h1>Welcome to Producer Interface</h1>
+    <a href="/create_item_page">Create Item</a><br>
+    <a href="/place_order_page">Place Order</a>
+
+    <h2>Bill Data Messages:</h2>
+    <div id="bill_data_messages"></div>
+</body>
+</html>

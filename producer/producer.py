@@ -4,6 +4,7 @@ import json
 import time
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
+import mysql.connector
 
 connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
 channel = connection.channel()
@@ -15,10 +16,14 @@ channel.queue_declare(queue='item_creation_queue')
 channel.queue_declare(queue='forward_to_inventory_manager')
 channel.queue_declare(queue='order_to_stock') 
 channel.queue_declare(queue='stock_to_order')
-channel.queue_declare(queue='bill_data')
+
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+cnx = mysql.connector.connect(user='root', password='badyal2003',
+                                  host='mysql', database='cc_project')
+cursor = cnx.cursor()
 
 
 
@@ -60,17 +65,14 @@ def place_order():
     order_data = json.loads(request.form['order_data'])
     channel.basic_publish(exchange='', routing_key='order_queue', body=json.dumps(order_data))
     return "Order placed successfully."
+@app.route('/history')
+def history():
+    # Fetch data from history tables in cc_project
+    cursor.execute("SELECT * FROM history")
+    history_data = cursor.fetchall()
 
-@socketio.on('connect')
-def handle_connect():
-    print('Client connected')
+    return render_template('history.html', history_data=history_data)
 
-def callback(ch, method, properties, body):
-    message_data = body.decode('utf-8')
-    print("Received message from bill_data:", message_data)
-    socketio.emit('bill_data_message', message_data)
-
-channel.basic_consume(queue='bill_data', on_message_callback=callback, auto_ack=True)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

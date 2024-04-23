@@ -2,8 +2,10 @@ import pika
 import mysql.connector
 import json
 import logging
+import time
 
 logging.basicConfig(level=logging.INFO)
+time.sleep(20)
 
 def update_item_quantity(cursor, item_id, quantity):
     cursor.execute("UPDATE items SET quantity = quantity + %s WHERE itemID = %s", (quantity, item_id))

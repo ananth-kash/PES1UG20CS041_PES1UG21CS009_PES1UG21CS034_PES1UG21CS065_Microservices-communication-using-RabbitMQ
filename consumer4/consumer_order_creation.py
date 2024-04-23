@@ -2,8 +2,11 @@ import pika
 import mysql.connector
 import json
 import logging
+import time
 
 logging.basicConfig(level=logging.INFO)
+
+time.sleep(20)
 
 # Establish RabbitMQ connection
 connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
@@ -26,6 +29,7 @@ def process_order_message(order_data):
         logging.error("Error forwarding order to stock manager: %s", e)
 
 # Function to calculate total price after receiving response from stock manager
+# Function to calculate total price after receiving response from stock manager
 def calculate_total_price(order_data):
     try:
         order = json.loads(order_data)
@@ -36,13 +40,19 @@ def calculate_total_price(order_data):
             cursor.execute("SELECT price FROM items WHERE itemID = %s", (item_id,))
             item_price = cursor.fetchone()[0]
             total_price += item_price * quantity
+        
+        # Insert order details into history table
+        cursor.execute("INSERT INTO history (details, bill) VALUES (%s, %s)", (order_data, total_price))
+        cnx.commit()  # Commit the transaction
+        
         logging.info("Order processed successfully. Total price: %s", str(total_price))
-        channel.basic_publish(exchange='', routing_key='bill_data', body=str(total_price))
+        
 
     except mysql.connector.Error as err:
         logging.error("MySQL error: %s", err)
     except Exception as e:
         logging.error("Error calculating total price: %s", e)
+
 
 
 # Callback function for consuming messages from order_queue

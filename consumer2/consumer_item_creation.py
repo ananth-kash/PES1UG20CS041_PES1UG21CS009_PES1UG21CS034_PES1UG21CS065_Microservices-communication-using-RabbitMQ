@@ -3,6 +3,7 @@ import pika
 import mysql.connector
 import json
 import time
+time.sleep(20)
 
 
 connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))

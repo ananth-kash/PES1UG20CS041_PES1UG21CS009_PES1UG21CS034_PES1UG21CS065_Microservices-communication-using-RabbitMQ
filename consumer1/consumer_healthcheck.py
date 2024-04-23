@@ -2,15 +2,18 @@
 import time
 import pika
 import mysql.connector
-
+import logging
 
 time.sleep(30)
+
+
+logging.basicConfig(level=logging.INFO)
 def check_health():
     try:
         # Check RabbitMQ connection
         connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
         connection.close()
-        print("RabbitMQ is healthy.")
+        logging.info("RabbitMQ is healthy.")
 
         # Check MySQL connection
         cnx = mysql.connector.connect(user='root', password='badyal2003', host='mysql', database='cc_project')
@@ -19,7 +22,7 @@ def check_health():
         cursor.fetchall()
         cursor.close()
         cnx.close()
-        print("MySQL is healthy.")
+        logging.info("MySQL is healthy.")
     except Exception as e:
         print("Error:", e)
 

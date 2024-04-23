@@ -16,52 +16,42 @@ services:
       retries: 5
 
   mysql:
-    build:
-      context: ./mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: badyal2003
+    image: try-mysql:latest  # Provide the correct image reference here
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - ./mysql/mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "3307", "-u", "root", "-pbadyal2003"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    environment:
+      MYSQL_ROOT_PASSWORD: badyal2003
+    
 
   item_creation_microservice:
-    build:
-      context: ./consumer2
+    image: try-item_creation_microservice:latest  # Provide the correct image reference here
+    deploy:
+      replicas: 3
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      
-      
+      - rabbitmq
 
   order_processing_microservice:
-    build:
-      context: ./consumer4
+    image: try-order_processing_microservice:latest  # Provide the correct image reference here
+    deploy:
+      replicas: 3
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      
-      
+      - rabbitmq
 
   inventory_manager_microservice:
-    build:
-      context: ./consumer3
+    image: try-inventory_manager_microservice:latest  # Provide the correct image reference here
+    deploy:
+      replicas: 3
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      
-      
+      - rabbitmq
 
   producer:
-    build:
-      context: ./producer
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+    image: try-producer:latest  # Provide the correct image reference here
     ports:
       - "5000:5000"
+    depends_on:
+      - rabbitmq
+
+  healthcheck_microservice:
+    image: try-healthcheck_microservice:latest  # Provide the correct image reference here
